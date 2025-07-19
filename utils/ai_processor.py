@@ -16,16 +16,24 @@ class CVAnalyzer:
     
     def __init__(self):
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
-        if self.openai_api_key:
-            self.client = OpenAI(api_key=self.openai_api_key)
-            self.ai_available = True
+        self.client = None
+        self.ai_available = False
+        
+        if self.openai_api_key and self.openai_api_key.strip():
+            try:
+                self.client = OpenAI(api_key=self.openai_api_key)
+                self.ai_available = True
+                logger.info("✅ Cliente OpenAI inicializado correctamente")
+            except Exception as e:
+                logger.error(f"❌ Error inicializando OpenAI: {e}")
+                self.ai_available = False
         else:
-            self.ai_available = False
             logger.warning("⚠️ OpenAI API key no configurada - usando procesamiento básico")
     
     def analyze_cv_with_ai(self, cv_text: str) -> Dict[str, Any]:
         """Analizar CV usando OpenAI GPT"""
-        if not self.ai_available:
+        if not self.ai_available or not self.client:
+            logger.info("IA no disponible, usando análisis básico")
             return self._basic_analysis(cv_text)
         
         try:

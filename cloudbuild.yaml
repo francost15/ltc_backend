@@ -1,0 +1,29 @@
+steps:
+  # Build de la imagen Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ltc-backend:$COMMIT_SHA', '.']
+  
+  # Push de la imagen al Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/ltc-backend:$COMMIT_SHA']
+  
+  # Tag de la imagen como 'latest'
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['tag', 'gcr.io/$PROJECT_ID/ltc-backend:$COMMIT_SHA', 'gcr.io/$PROJECT_ID/ltc-backend:latest']
+  
+  # Push de la imagen 'latest'
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/ltc-backend:latest']
+
+# Imágenes que se crearán
+images:
+  - 'gcr.io/$PROJECT_ID/ltc-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/ltc-backend:latest'
+
+# Timeout del build
+timeout: '1200s'
+
+# Opciones de build
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8' 

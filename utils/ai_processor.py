@@ -21,12 +21,14 @@ class CVAnalyzer:
         
         if self.openai_api_key and self.openai_api_key.strip():
             try:
+                # Inicialización simple sin argumentos adicionales
                 self.client = OpenAI(api_key=self.openai_api_key)
                 self.ai_available = True
                 logger.info("✅ Cliente OpenAI inicializado correctamente")
             except Exception as e:
                 logger.error(f"❌ Error inicializando OpenAI: {e}")
                 self.ai_available = False
+                self.client = None
         else:
             logger.warning("⚠️ OpenAI API key no configurada - usando procesamiento básico")
     
@@ -188,4 +190,9 @@ Responde SOLO con el JSON válido, sin texto adicional.
         return matches[0] if matches else None
 
 # Instancia global del analizador
-cv_analyzer = CVAnalyzer() 
+try:
+    cv_analyzer = CVAnalyzer()
+except Exception as e:
+    print(f"Error inicializando CVAnalyzer: {e}")
+    # Crear una instancia básica sin OpenAI
+    cv_analyzer = None 

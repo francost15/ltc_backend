@@ -124,7 +124,27 @@ class CandidatoService:
             
             # 3. Analizar CV con IA
             logger.info("Analizando CV con IA")
-            analyzed_data = cv_analyzer.analyze_cv_with_ai(cv_text)
+            if cv_analyzer:
+                analyzed_data = cv_analyzer.analyze_cv_with_ai(cv_text)
+            else:
+                logger.warning("CV Analyzer no disponible, usando análisis básico")
+                # Análisis básico como fallback
+                analyzed_data = {
+                    "informacion_personal": {
+                        "nombre": None,
+                        "telefono": None,
+                        "ciudad": None,
+                        "pais": None,
+                        "linkedin_url": None,
+                        "portfolio_url": None,
+                        "titulo_profesional": None,
+                        "resumen_profesional": None
+                    },
+                    "experiencias": [],
+                    "educaciones": [],
+                    "certificaciones": [],
+                    "idiomas": []
+                }
             
             # 4. Actualizar información del candidato
             self._update_candidato_info(candidato['id'], analyzed_data)

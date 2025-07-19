@@ -1,9 +1,9 @@
 """
 Utilidades para conexión y manejo de base de datos PostgreSQL
 """
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from psycopg2.pool import SimpleConnectionPool
+import psycopg
+from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 import os
 import logging
 from typing import Optional, Dict, List, Any
@@ -16,17 +16,17 @@ class DatabaseManager:
     """Manejador de conexiones a PostgreSQL"""
     
     def __init__(self):
-        self.pool: Optional[SimpleConnectionPool] = None
+        self.pool: Optional[ConnectionPool] = None
         self.database_url = Config.DATABASE_URL
         
     def init_db(self):
         """Inicializar pool de conexiones"""
         try:
             # Configurar pool más conservador para evitar problemas SSL
-            self.pool = SimpleConnectionPool(
-                minconn=2,
-                maxconn=10,  # Pool más pequeño para evitar saturación
-                dsn=self.database_url
+            self.pool = ConnectionPool(
+                conninfo=self.database_url,
+                min_size=2,
+                max_size=10  # Pool más pequeño para evitar saturación
             )
             logger.info("✅ Pool de conexiones PostgreSQL inicializado (2-10 conexiones)")
             return True
@@ -52,7 +52,7 @@ class DatabaseManager:
                     test_cursor.execute("SELECT 1")
                 yield conn
                 break
-            except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            except (psycopg.OperationalError, psycopg.InterfaceError) as e:
                 error_msg = str(e).lower()
                 if "ssl connection has been closed" in error_msg:
                     logger.warning(f"⚠️ Error SSL de conexión (intento {retry_count + 1}/{max_retries}): Conexión SSL cerrada inesperadamente")
@@ -61,7 +61,7 @@ class DatabaseManager:
                 
                 if conn:
                     try:
-                        self.pool.putconn(conn, close=True)  # Cerrar conexión defectuosa
+                        self.pool.putconn(conn)  # Devolver conexión al pool
                     except:
                         pass
                     conn = None
@@ -85,9 +85,9 @@ class DatabaseManager:
     def execute_query(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:
         """Ejecutar query SELECT y retornar resultados"""
         with self.get_connection() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            with conn.cursor(row_factory=dict_row) as cursor:
                 cursor.execute(query, params)
-                return [dict(row) for row in cursor.fetchall()]
+                return cursor.fetchall()
     
     def execute_insert(self, query: str, params: tuple = None) -> bool:
         """Ejecutar INSERT y retornar éxito"""

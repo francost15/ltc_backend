@@ -5,7 +5,7 @@ import logging
 import uuid
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from psycopg2.extras import RealDictCursor
+from psycopg.rows import dict_row
 from utils.database import get_db_manager
 from utils.pdf_processor import document_processor
 from utils.ai_processor import cv_analyzer
@@ -23,7 +23,7 @@ class CandidatoService:
         try:
             # Usar una sola conexión para todas las consultas
             with self.db.get_connection() as conn:
-                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                with conn.cursor(row_factory=dict_row) as cursor:
                     # Obtener candidato básico
                     cursor.execute("""
                         SELECT c.*, u.email
